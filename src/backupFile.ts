@@ -4,10 +4,23 @@ import { File, Paths } from 'expo-file-system';
 import * as Sharing from 'expo-sharing';
 import { Platform } from 'react-native';
 
-// Phone: write the file, then open the share sheet (Save to Files, Drive, email...). Web: download it.
+// Phone: write the file, then open the share sheet (Save to Files, Drive, email...).
+// Web on a phone: the browser's share sheet (Web Share API). Web on a computer, or no share support: download it.
 export async function saveBackupFile(json: string, fileName: string) {
   if (Platform.OS === 'web') {
-    const url = URL.createObjectURL(new Blob([json], { type: 'application/json' }));
+    // globalThis.File is the browser's File (the File imported above is expo-file-system's).
+    const file = new globalThis.File([json], fileName, { type: 'application/json' });
+    const isPhone = matchMedia('(pointer: coarse)').matches; // touch screen, e.g. iPhone Safari
+    if (isPhone && navigator.canShare?.({ files: [file] })) {
+      try {
+        await navigator.share({ files: [file], title: 'Budjet backup' });
+        return;
+      } catch (e) {
+        if (e instanceof Error && e.name === 'AbortError') return; // you closed the share sheet
+        // any other share error: fall through to a normal download
+      }
+    }
+    const url = URL.createObjectURL(file);
     const link = document.createElement('a');
     link.href = url;
     link.download = fileName;
