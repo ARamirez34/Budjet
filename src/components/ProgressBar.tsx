@@ -1,9 +1,11 @@
 import { StyleSheet, Text, View } from 'react-native';
 import { formatMoney } from '../money';
-import { colors } from '../theme';
+import { useColors, type Colors } from '../theme';
 
 // "$210 of $300 spent this month — $90 left". Green, then yellow at 80%, red when over.
 export function ProgressBar({ spent, limit }: { spent: number; limit: number }) {
+  const colors = useColors();
+  const styles = makeStyles(colors);
   const ratio = limit > 0 ? spent / limit : 0;
   const color = ratio > 1 ? colors.red : ratio >= 0.8 ? colors.yellow : colors.green;
   const left = limit - spent;
@@ -23,10 +25,11 @@ export function ProgressBar({ spent, limit }: { spent: number; limit: number }) 
   );
 }
 
-const styles = StyleSheet.create({
-  text: { fontSize: 15, color: colors.text },
-  bold: { fontWeight: '700' },
-  track: { height: 12, borderRadius: 6, backgroundColor: colors.lavender, marginVertical: 10, overflow: 'hidden' },
-  fill: { height: '100%', borderRadius: 6 },
-  left: { fontSize: 14, fontWeight: '600' },
-});
+const makeStyles = (colors: Colors) =>
+  StyleSheet.create({
+    text: { fontSize: 15, color: colors.text },
+    bold: { fontWeight: '700' },
+    track: { height: 12, borderRadius: 6, backgroundColor: colors.lavender, marginVertical: 10, overflow: 'hidden' },
+    fill: { height: '100%', borderRadius: 6 },
+    left: { fontSize: 14, fontWeight: '600' },
+  });

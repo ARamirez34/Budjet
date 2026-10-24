@@ -22,6 +22,13 @@ export function balance(account: Account, txs: Transaction[]): number {
   return Math.round(total * 100) / 100;
 }
 
+// Editing an account's balance: find the starting balance that makes today's balance
+// come out to `wanted`, so past transactions stay as they are.
+export function startingBalanceFor(account: Account, txs: Transaction[], wanted: number): number {
+  const fromTransactions = balance(account, txs) - account.startingBalance;
+  return Math.round((wanted - fromTransactions) * 100) / 100;
+}
+
 export function totals(accounts: Account[], txs: Transaction[]) {
   let cash = 0;
   let debt = 0;
@@ -75,11 +82,17 @@ export function monthName(month: string): string {
 export const newestFirst = (txs: Transaction[]) =>
   [...txs].reverse().sort((a, b) => b.date.localeCompare(a.date));
 
-// Every expense counts, whether paid by checking or by card.
-export function monthSpending(txs: Transaction[], month: string): number {
+// All expenses in a month (used by Summary).
+export function monthExpenses(txs: Transaction[], month: string): number {
   return txs
     .filter((t) => t.type === 'expense' && monthOf(t.date) === month)
     .reduce((sum, t) => sum + t.amount, 0);
+}
+
+// What counts toward the monthly limit: every expense, by checking or by card,
+// except bills. Fixed costs like rent would blow a $300 limit on day one.
+export function monthSpending(txs: Transaction[], month: string): number {
+  return monthExpenses(txs.filter((t) => !t.billId), month);
 }
 
 export function monthIncome(txs: Transaction[], month: string): number {

@@ -1,20 +1,22 @@
 import { Ionicons } from '@expo/vector-icons';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { formatMoney } from '../money';
-import { colors } from '../theme';
+import { useColors, type Colors } from '../theme';
 import type { Account } from '../types';
 import { Bubble } from './ui';
 
 // Each account type gets its own pastel look.
-const LOOK = {
+const lookFor = (colors: Colors) => ({
   checking: { icon: 'wallet-outline', bg: colors.mint, fg: colors.mintDark, name: 'Checking' },
   savings: { icon: 'leaf-outline', bg: colors.sky, fg: colors.skyDark, name: 'Savings' },
   credit: { icon: 'card-outline', bg: colors.peach, fg: colors.coral, name: 'Credit card' },
-} as const;
+} as const);
 
 // One account with its current balance. Cards also show utilization (owed / limit).
 export function AccountRow({ account, balance, onPress }: { account: Account; balance: number; onPress?: () => void }) {
-  const look = LOOK[account.type];
+  const colors = useColors();
+  const styles = makeStyles(colors);
+  const look = lookFor(colors)[account.type];
   const isCard = account.type === 'credit';
   const usage = isCard && account.creditLimit ? balance / account.creditLimit : 0;
 
@@ -37,9 +39,10 @@ export function AccountRow({ account, balance, onPress }: { account: Account; ba
   );
 }
 
-const styles = StyleSheet.create({
-  row: { flexDirection: 'row', alignItems: 'center', paddingVertical: 10 },
-  name: { fontSize: 16, fontWeight: '700', color: colors.text },
-  sub: { fontSize: 13, color: colors.muted, marginTop: 2 },
-  amount: { fontSize: 16, fontWeight: '800', color: colors.text },
-});
+const makeStyles = (colors: Colors) =>
+  StyleSheet.create({
+    row: { flexDirection: 'row', alignItems: 'center', paddingVertical: 10 },
+    name: { fontSize: 16, fontWeight: '700', color: colors.text },
+    sub: { fontSize: 13, color: colors.muted, marginTop: 2 },
+    amount: { fontSize: 16, fontWeight: '800', color: colors.text },
+  });

@@ -4,7 +4,7 @@ import { AccountRow } from '@/components/AccountRow';
 import { Button, Card, SectionTitle } from '@/components/ui';
 import { balance } from '@/money';
 import { useData } from '@/store';
-import { colors } from '@/theme';
+import { useColors } from '@/theme';
 import type { AccountType } from '@/types';
 
 const GROUPS: { type: AccountType; title: string }[] = [
@@ -15,6 +15,7 @@ const GROUPS: { type: AccountType; title: string }[] = [
 
 export default function AccountsScreen() {
   const { accounts, transactions } = useData();
+  const colors = useColors();
 
   return (
     <ScrollView contentContainerStyle={{ padding: 16 }}>

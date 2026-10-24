@@ -3,9 +3,9 @@ import { router, Stack, useLocalSearchParams } from 'expo-router';
 import { useState } from 'react';
 import { Alert, ScrollView, Text, View } from 'react-native';
 import { Button, Chips, Field, formStyle } from '@/components/ui';
-import { parseMoney } from '@/money';
+import { balance, parseMoney, startingBalanceFor } from '@/money';
 import { newId, useData } from '@/store';
-import { colors } from '@/theme';
+import { useColors } from '@/theme';
 import type { AccountType } from '@/types';
 
 const TYPES: { value: AccountType; label: string }[] = [
@@ -16,28 +16,31 @@ const TYPES: { value: AccountType; label: string }[] = [
 
 export default function AccountForm() {
   const { id } = useLocalSearchParams<{ id?: string }>();
-  const { accounts, transactions, saveAccount, deleteAccount } = useData();
+  const { accounts, transactions, bills, saveAccount, deleteAccount } = useData();
+  const colors = useColors();
   const existing = accounts.find((a) => a.id === id);
 
   const [name, setName] = useState(existing?.name ?? '');
   const [type, setType] = useState<AccountType>(existing?.type ?? 'checking');
-  const [start, setStart] = useState(existing ? String(existing.startingBalance) : '');
+  // The box shows today's balance. Typing a new number makes that the balance.
+  const [current, setCurrent] = useState(existing ? String(balance(existing, transactions)) : '');
   const [limit, setLimit] = useState(existing?.creditLimit ? String(existing.creditLimit) : '');
   const isCard = type === 'credit';
 
   function save() {
-    const startingBalance = start.trim() === '' ? 0 : parseMoney(start);
+    const wanted = current.trim() === '' ? 0 : parseMoney(current);
     const creditLimit = parseMoney(limit);
 
     if (!name.trim()) return Alert.alert('Please enter a name.');
-    if (!Number.isFinite(startingBalance)) return Alert.alert('Starting balance must be a number.');
+    if (!Number.isFinite(wanted)) return Alert.alert('Balance must be a number.');
     if (isCard && !(creditLimit > 0)) return Alert.alert('Credit limit must be more than $0.');
 
     saveAccount({
       id: existing?.id ?? newId(),
       name: name.trim(),
       type,
-      startingBalance,
+      // New account: no transactions yet, so the balance you type is the starting balance.
+      startingBalance: existing ? startingBalanceFor(existing, transactions, wanted) : wanted,
       creditLimit: isCard ? creditLimit : undefined,
     });
     router.back();
@@ -46,9 +49,12 @@ export default function AccountForm() {
   function confirmDelete() {
     if (!existing) return;
     const linked = transactions.filter((t) => t.accountId === existing.id || t.toAccountId === existing.id).length;
+    const linkedBills = bills.filter((b) => b.accountId === existing.id).length;
     Alert.alert(
       `Delete ${existing.name}?`,
-      linked > 0 ? `This also deletes ${linked} transaction(s) linked to it.` : undefined,
+      linked + linkedBills > 0
+        ? `This also deletes ${linked} transaction(s) and ${linkedBills} bill(s) linked to it.`
+        : undefined,
       [
         { text: 'Cancel', style: 'cancel' },
         {
@@ -71,9 +77,9 @@ export default function AccountForm() {
       {/* Type is locked after creation: switching e.g. checking -> card would flip the meaning of past transactions. */}
       <Chips label="Type" options={TYPES} value={type} onChange={setType} disabled={!!existing} />
       <Field
-        label={isCard ? 'Amount owed at start' : 'Starting balance'}
-        value={start}
-        onChangeText={setStart}
+        label={isCard ? 'Amount owed now' : 'Current balance'}
+        value={current}
+        onChangeText={setCurrent}
         placeholder="0.00"
         keyboardType="decimal-pad"
       />
@@ -82,7 +88,7 @@ export default function AccountForm() {
       )}
       {existing && (
         <Text style={{ color: colors.muted, marginBottom: 16 }}>
-          The starting balance is the amount before any transactions you've entered. The current balance is calculated from it.
+          Change this to match your bank app and Budjet will use the new number. Your past entries stay as they are.
         </Text>
       )}
 

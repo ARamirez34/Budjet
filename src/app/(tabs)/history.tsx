@@ -7,12 +7,13 @@ import { TxRow } from '@/components/TxRow';
 import { Card, Chips } from '@/components/ui';
 import { monthOf, newestFirst, today } from '@/money';
 import { useData } from '@/store';
-import { colors } from '@/theme';
+import { useColors } from '@/theme';
 
 const ALL = 'all';
 
 export default function HistoryScreen() {
   const { accounts, transactions } = useData();
+  const colors = useColors();
   const [month, setMonth] = useState(monthOf(today()));
   const [accountId, setAccountId] = useState(ALL);
 
@@ -34,15 +35,10 @@ export default function HistoryScreen() {
 
       <Card>
         {shown.length === 0 ? (
-          <Text style={{ color: colors.muted }}>No entries for this month 🌙</Text>
+          <Text style={{ color: colors.muted }}>No entries for this month</Text>
         ) : (
           shown.map((t) => (
-            <TxRow
-              key={t.id}
-              tx={t}
-              accounts={accounts}
-              onPress={() => router.push({ pathname: '/transaction-form', params: { id: t.id } })}
-            />
+            <TxRow key={t.id} tx={t} onPress={() => router.push({ pathname: '/transaction-form', params: { id: t.id } })} />
           ))
         )}
       </Card>
