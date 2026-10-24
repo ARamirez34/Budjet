@@ -3,7 +3,8 @@
   <head>
     <meta charset="utf-8" />
     <meta httpEquiv="X-UA-Compatible" content="IE=edge" />
-    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no" />
+    <!-- viewport-fit=cover lets iPhone report its safe areas (notch, home bar) so the tab bar can pad for them. -->
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no, viewport-fit=cover" />
     <title>%WEB_TITLE%</title>
 
     <!-- Home screen app: "Add to Home Screen" opens Budjet full screen, without the browser bars. -->
@@ -32,6 +33,26 @@
         display: flex;
         height: 100%;
         flex: 1;
+      }
+    </style>
+    <style id="budjet-ios">
+      /* Same background as the app, so bounces and safe areas never flash white. */
+      html,
+      body {
+        background-color: #fbf8f3;
+        -webkit-text-size-adjust: 100%; /* no automatic text resizing when rotating */
+      }
+      @media (prefers-color-scheme: dark) {
+        html,
+        body {
+          background-color: #16141d;
+        }
+      }
+      /* iPhone Safari zooms the page when you tap a text box with text under 16px. */
+      input,
+      textarea,
+      select {
+        font-size: 16px !important;
       }
     </style>
   </head>
